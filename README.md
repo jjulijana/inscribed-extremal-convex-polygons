@@ -1,2 +1,5 @@
-# inscribed-extremal-convex-polygons
-Extremal convex polygons inscribed in a given convex polygon
+# Ekstremalni konveksni poligoni upisani u dati konveksni poligon
+
+Ova recenzija je seminarski rad rađen za potrebe kursa Geometrijski algoritmi na Matematičkom fakultetu Univerziteta u Beogradu i predstavlja analizu naučnog rada *Extremal Convex Polygons Inscribed in a Given Convex Polygon*, objavljenog u časopisu *Computational Geometry*, izdanje 102, mart 2022. Analizirani rad je dostupan na platformi ScienceDirect na strani https://www.sciencedirect.com/science/article/pii/S0925772121001000#en0080.
+
+U radu se razmatra problem ekstremalnih konveksnih poligona upisanih u dati konveksni poligon. Konveksni poligon Q smatra se upisanim u konveksni poligon P ako svaka stranica poligona P sadrži bar jedno teme poligona Q. Predstavljaju se algoritmi za pronalaženje konveksnog poligona minimalne površine i minimalnog obima upisanog u proizvoljan dati konveksni n-tougao, uz analizu njihove vremenske složenosti.
