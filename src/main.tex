@@ -1,0 +1,285 @@
+% !TEX encoding = UTF-8 Unicode
+
+\documentclass[a4paper]{article}
+
+\usepackage{color}
+\usepackage{url}
+\usepackage[T2A]{fontenc} % enable Cyrillic fonts
+\usepackage[utf8]{inputenc} % make weird characters work
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{subfig}
+\usepackage{lipsum}
+\usepackage[english,serbian]{babel}
+\usepackage[strings]{underscore}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{caption}
+%\usepackage[english,serbianc]{babel} %ukljuciti babel sa ovim opcijama, umesto gornjim, ukoliko se koristi cirilica
+
+\usepackage[unicode]{hyperref}
+\hypersetup{colorlinks,citecolor=green,filecolor=green,linkcolor=blue,urlcolor=blue}
+
+%\newtheorem{primer}{Пример}[section] %ćirilični primer
+\newtheorem{definicija}{Definicija}
+\newtheorem{teorema}{Teorema}
+
+\usepackage{listings}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+\title{Ekstremalni konveksni poligoni\\ upisani u dati konveksni poligon\\
+\small{Seminarski rad u okviru kursa\\Geometrijski algoritmi\\ Matematički fakultet}}
+
+\author{Julijana Jevtić, 1131/2025\\ mi251131@alas.matf.bg.ac.rs}
+\maketitle
+
+\abstract{
+Problemi ekstremalnih konveksnih poligona predstavljaju važnu oblast istraživanja u računarskoj geometriji, kako sa teorijskog, tako i sa algoritamskog stanovišta. Posebno su interesantni problemi optimizacije geometrijskih veličina, poput površine i obima, pod različitim kombinatornim i geometrijskim ograničenjima.
+
+U ovom radu razmatra se naučni članak koji se bavi problemom pronalaženja konveksnih poligona minimalne površine i minimalnog obima upisanih u dati konveksni $n$-tougao. Prikazana su algoritamska rešenja za oba problema, pri čemu se pokazuje da se problem minimalne površine može rešiti u linearnoj vremenskoj složenosti, dok je problem minimalnog obima znatno složeniji i zahteva algoritam kubne složenosti. U okviru recenzije analiziraju se osnovne ideje rada, korišćene definicije i metode, kao i odnos do ranijih rezultata u oblasti računarske geometrije.
+}
+
+\tableofcontents
+
+
+\section{Uvod}
+\label{sec:uvod}
+
+Motivacija za rad \textit{Extremal convex polygons inscribed in a given convex polygon} \cite{KODMON2022101844} potiče iz statistike i nedavnih istraživanja ekstremalnih geometrijskih konfiguracija. U ranijem radu \cite{AUSSERHOFER201998} Zsolt je sa koautorima Ausserhofer, Dann, Tóth i drugim razmatrao algoritamske aspekte pronalaženja konveksnih poligona maksimalne površine koji su opisani oko datog konveksnog poligona. Ovaj problem otvara prirodno pitanje dualne prirode: kako pronaći konveksne poligone minimalne površine ili obima koji su \emph{upisani} u dati konveksni poligon.
+
+Cilj ovog rada je da se, za dati konveksni $n$-tougao $C$, pronađe \textbf{konveksni poligon upisan u $C$} sa minimalnom površinom ili minimalnim obimom. Za ova dva problema razmatraju se algoritamska rešenja koja zahtevaju $O(n)$ i $O(n^3)$ koraka, respektivno.
+
+\subsection{Autori i publikacija}
+
+Autori rada su \href{https://dl.acm.org/profile/99660218515}{\textbf{Csenge Lili Ködmön}} i \href{https://www.researchgate.net/profile/Zsolt-Langi}{\textbf{Zsolt Lángi}}, istraživači sa \textit{Departmana za geometriju} univerziteta za tehnologiju i ekonomiju u Budimpešti (\textit{Budapest University of Technology and Economics}). Drugi autor je takođe član \textit{MTA--BME Morphodynamics Research Group}, istraživačke grupe u okviru Mađarske akademije nauka.
+
+Rad je objavljen u međunarodnom naučnom časopisu \href{https://www.sciencedirect.com/journal/computational-geometry}{\textit{Computational Geometry}}, u okviru \textbf{volumena 102}, u \textbf{martu 2022. godine}. Časopis \textit{Computational Geometry} predstavlja jedan od vodećih časopisa u oblasti računarske geometrije i objavljuje radove koji se bave teorijskim, algoritamskim i primenjenim aspektima ove oblasti.
+
+\subsection{Notacija i osnovne definicije}
+
+\begin{definicija}
+Neka je $C$ konveksni poligon. Ako je $Q$ konveksni poligon takav da svaka stranica poligona $C$ sadrži bar jedno teme poligona $Q$, kažemo da je $Q$ \emph{upisan} u $C$.
+\end{definicija}
+
+U radu $C$ označava konveksni $n$-tougao sa $n \geq 5$ temena
+$p_1, p_2, \ldots, p_n$ raspoređenih u smeru suprotnom od kazaljke na satu.
+Indekse proširujemo na sve cele brojeve tako da važi $p_i = p_j$ ako i samo ako
+$i \equiv j \pmod{n}$.
+
+Za bilo koje tačke $x, y \in \mathbb{R}^2$, sa $xy$ označavamo zatvorenu duž sa krajevima $x$ i $y$, dok njegovu dužinu označavamo sa $|xy|$. Tačke posmatramo kao vektore položaja, te izraz $y - x$ predstavlja vektor usmeren od tačke $x$ ka tački $y$. Sa $\mathrm{conv}(X)$ označavamo konveksni omotač skupa $X$.
+
+Oslanjamo se na kombinatorna svojstva opisana nizovima iz skupa $\{U, N\}^n$, koji se mogu smatrati dualnim pojmovima u odnosu na Definiciju~1 iz \cite{AUSSERHOFER201998}. Ciklična sekvenca $s(Q)=(s_1,\dots,s_n)\in\{N,U\}^n$ pridružena je upisanom
+konveksnom poligonu $Q$ i opisuje njegov odnos prema temenima poligona $C$.
+Simbol $N$ označava da odgovarajuće teme poligona $C$ nije teme poligona $Q$,
+dok simbol $U$ označava da se dato teme poligona $C$ koristi kao teme poligona
+$Q$.
+
+
+\section{Konveksni poligoni minimalne površine upisani u \(C\)}
+
+U ovom poglavlju razmatra se problem nalaženja konveksnog poligona minimalne
+površine koji je upisan u dati konveksni poligon $C$. Pod upisanim poligonom
+podrazumeva se konveksni poligon čija se temena nalaze na ivicama ili u
+temenima poligona $C$, uz dodatni uslov da svaka stranica poligona $C$ sadrži
+bar jedno teme upisanog poligona. Cilj je minimizovati površinu takvog
+poligona.
+
+\subsubsection*{Strukturne osobine optimalnih rešenja}
+Autori najpre dokazuju da optimalna rešenja imaju \textbf{snažno ograničenu strukturu}. 
+Ova činjenica značajno redukuje broj mogućih rasporeda koje je potrebno
+razmatrati.
+\begin{teorema}
+Neka je $Q$ konveksni poligon minimalne površine upisan u konveksni poligon
+$C$, sa temenima $q_1,q_2,\dots,q_k$ u smeru suprotnom od kazaljke na satu.
+Tada važi sledeće:
+\begin{enumerate}
+    \item $Q$ nema dva uzastopna temena koja su unutrašnje tačke nekih stranica
+    poligona $C$.
+    \item Ako je $q_j$ teme poligona $Q$ koje se nalazi u unutrašnjosti
+    stranice $p_i p_{i+1}$ poligona $C$, tada su susedna temena poligona $Q$
+    uz $q_j$ tačno $p_{i-1}$ i $p_{i+2}$, i važi da je prava
+    $p_{i-1}p_{i+2}$ paralelna sa $p_i p_{i+1}$.
+    \item Postoji konveksni poligon minimalne površine $Q_0$ upisan u $C$, sa
+    temenima $q'_1,q'_2,\dots,q'_k$ u smeru suprotnom od kazaljke na satu, takav
+    da važi:
+    \begin{itemize}
+        \item $q_j$ je teme poligona $C$ ako i samo ako je $q_j = q'_j$, i
+        \item ako je $q_j$ unutrašnja tačka stranice $p_i p_{i+1}$, tada
+        $q'_j \in \{p_i, p_{i+1}\}$.
+    \end{itemize}
+\end{enumerate}
+\end{teorema}
+
+Kao posledica ovih rezultata, pokazuje se da\textbf{ uvek postoji optimalno
+rešenje} čija se temena, osim u posebnim slučajevima, mogu izabrati među
+temenima poligona $C$.
+
+\subsection{Algoritamsko rešenje}
+Na osnovu prethodno dokazanih osobina, problem minimizacije površine
+svodi se na izbor podskupa temena poligona $C$.  Na taj način, geometrijski problem se svodi na \textbf{kombinatorni problem} izbora elemenata
+sa maksimalnom ukupnom vrednošću uz zabranu izbora susednih elemenata u
+cikličnom redosledu.
+
+Svakom temenu $p_i$ poligona
+$C$ pridružuje se površina trougla $T_i = \triangle(p_{i-1},p_i,p_{i+1})$
+određenog temenima $p_{i-1}$, $p_i$ i $p_{i+1}$.  Površine ovih trouglova
+mogu se efikasno izračunati primenom determinanti, u jednom prolazu kroz
+temena poligona $C$, čime se ovaj korak izvršava u \textbf{linearnom vremenu}.
+Izborom tog trougla odgovarajuće teme se „preskače“, čime se
+površina upisanog poligona smanjuje za odgovarajući iznos.
+Ovakav problem može se rešiti efikasno primenom dinamičkog programiranja. Rekurzivne relacije
+omogućavaju da se ove vrednosti izračunaju u jednom prolazu, pri čemu se za
+svaki korak porede mogućnosti uključivanja ili isključivanja tekućeg trougla.
+
+\subsection{Kombinatorna svojstva}
+
+\noindent
+\begin{minipage}[t]{0.62\textwidth}
+\vspace{0pt}
+U ovom delu rada dodajemo uslov da su sva temena upisanog polinoma ujedno i temena poligona $C$.
+U tom slučaju, svaki takav poligon $Q$ može se opisati odgovarajućom \textbf{cikličnom
+sekvencom} $s(Q)$ nad alfabetom $\{N,U\}$, koja kodira raspored njegovih temena
+duž ivica poligona $C$. Kada su sva temena poligona $Q$ temena poligona $C$,
+sekvenca $s(Q)$ jednoznačno određuje poligon $Q$.
+
+Centralni kombinatorni rezultat ovog dela rada formulisan je u sledećoj teoremi:
+\begin{teorema}
+Neka je $s \in \{N,U\}^n$, gde je $n \ge 5$. Tada su sledeći uslovi ekvivalentni:
+\begin{enumerate}
+    \item Postoji konveksni $n$-tougao $C$ sa jedinstvenim konveksnim poligonom
+    minimalne površine $Q$ takvim da važi $s(Q)=s$.
+    \item Ciklična sekvenca $s$ ne sadrži dva uzastopna simbola $N$ niti tri
+    uzastopna simbola $U$.
+\end{enumerate}
+\end{teorema}
+Ovaj rezultat daje potpunu kombinatornu karakterizaciju mogućih rasporeda temena
+koji se mogu javiti u jedinstvenim optimalnim rešenjima.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.33\textwidth}
+\vspace{0pt}
+\centering
+\includegraphics[width=\textwidth]{povrsina.png}
+\captionof{figure}{Poligon konstruisan pri dokazu Teoreme~2 za $k=5$ i $s=\text{NUNUNUUNUNUU}$.}
+\label{fig:area}
+\end{minipage}
+
+
+\section{Konveksni poligoni minimalnog obima upisani u \(C\)}
+
+Problem nalaženja konveksnog poligona minimalnog
+obima koji je upisan u dati konveksni poligon $C$ vrši se sa istim zahtevom da svaka 
+stranica poligona $C$ sadrži bar jedno teme upisanog poligona.
+
+\subsection{Algoritamsko rešenje}
+
+Autori najpre pokazuju da i u ovom slučaju optimalna rešenja imaju strogo
+ograničenu strukturu. Konkretno, dokazuje se da u poligonu minimalnog
+obima ne mogu postojati dva uzastopna temena koja se nalaze u
+unutrašnjosti stranica poligona $C$, kao i da se optimalne konfiguracije
+postižu u ekstremnim položajima temena duž ivica $C$, pri čemu su
+ivice optimalnog upisanog poligona ili ivice poligona $C$ ili njegove
+dijagonale koje preskaču tačno jedno teme.
+Ovi rezultati omogućavaju redukciju kontinuiranog problema na konačan skup kandidata.
+Time se dobija efikasan algoritam
+koji prolazi kroz temena poligona $C$ i lokalno odlučuje o izboru
+ivica u optimalnom poligonu i računa se u linearnom vremenu u odnosu na broj
+temena poligona $C$.
+
+
+U napomenama autori dodatno ističu da se sva optimalna rešenja mogu dobiti
+lokalnim pomeranjem temena duž odgovarajućih stranica poligona $C$, bez
+promene vrednosti obima, čime se precizno opisuje struktura porodice
+ekstremalnih konfiguracija.
+
+\noindent
+\begin{minipage}[t]{0.62\textwidth}
+\vspace{0pt}
+\begin{teorema}
+Neka je $s \in \{U,N\}^n$. Tada važi sledeće:
+\begin{enumerate}
+    \item Ako je $n$ neparan ili je $s = \underbrace{NN\ldots N}_{n}$, tada
+    postoji najviše jedan konveksni poligon minimalnog obima
+    $Q \in \mathcal{F}(C)$ takav da važi $s(Q)=s$.
+    \item Ako je $n$ paran i $s = \underbrace{NN\ldots N}_{n}$, tada ili ne
+    postoji nijedan poligon $Q \in \mathcal{F}(C)$ takav da važi $s(Q)=s$, ili
+    postoji beskonačno mnogo takvih poligona. U potonjem slučaju, ako
+    $Q_1, Q_2 \in \mathcal{F}(C)$ zadovoljavaju $s(Q_1)=s(Q_2)=s$, tada su svi
+    odgovarajući parovi stranica poligona $Q_1$ i $Q_2$ međusobno paralelni.
+\end{enumerate}
+\end{teorema}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.33\textwidth}
+\vspace{0pt}
+\centering
+\includegraphics[width=\textwidth]{obim1.png}
+\captionof{figure}{Ekstremalna konfiguracija minimalnog obima.}
+\label{fig:perimeter1}
+\end{minipage}
+
+Napomene~3--6 dodatno razjašnjavaju rezultate Teoreme~3 i opisuju strukturu
+optimalnih rešenja u problemu minimizacije perimetra. U slučaju kada je $n$
+paran i postoji beskonačno mnogo optimalnih poligona sa $s(Q)=NN\ldots N$,
+pokazuje se da sva ta rešenja čine jednoparametarsku porodicu dobijenu
+kontinuiranim pomeranjem temena. Dalje se objašnjava da se ove konfiguracije i
+njihovi perimetri mogu efikasno izračunati u linearnom vremenu, kao i da u
+slučaju pravilnog $n$-ugla minimalni perimetar postiže konveksni omotač
+središta ivica. Konačno, ističe se da algoritam može implicitno pratiti sva
+optimalna rešenja, koja su predstavljena u obliku stabla odluka.
+
+\subsection{Kombinatorna svojstva}
+
+\noindent
+\begin{minipage}[t]{0.55\textwidth}
+\vspace{0pt}
+Algoritam koristi geometrijska ograničenja optimalnih konfiguracija kako bi izbegao potpunu pretragu prostora rešenja, oslanjajući se na lokalne promene i poređenja duž ivica poligona $C$.
+
+\textbf{Teorema~4.}
+Ciklična sekvenca $s \in \{U,N\}^n$ je realizabilna ako i samo ako $s$ ne sadrži
+tri uzastopna simbola $U$.
+
+\medskip
+Prikazana konfiguracija ilustruje jedan od mogućih kombinatornih rasporeda
+temena optimalnog upisanog poligona minimalnog obima. Raspored ivica i
+dijagonala u ovakvim konfiguracijama direktno je uslovljen diskretnim izborom
+temena poligona $C$.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.4\textwidth}
+\vspace{0pt}
+\centering
+\includegraphics[width=\textwidth]{obim2.png}
+\label{fig:perimeter2}
+\end{minipage}
+
+\section{Zaključak}
+
+Dok minimizacija površine favorizuje određene rasporede temena koji „sabijaju“ unutrašnjost poligona, minimizacija obima uvodi dodatna ograničenja vezana za dužine ivica. Doprinos autora ogleda se u tome što obe varijante problema razmatraju u jedinstvenom okviru ekstremalnih upisanih poligona, dajući preciznu karakterizaciju optimalnih konfiguracija i izvodeći efikasne algoritme.
+
+\paragraph{Primene.}
+Iako je rad pretežno teorijske prirode i nema eksplicitne implementacione primene, dobijeni rezultati mogu poslužiti kao teorijska osnova za algoritme u računarskoj geometriji koji optimizuju granične karakteristike objekata. Minimalni upisani poligoni mogu se posmatrati kao „najmanje“ reprezentacije datog oblika pod zadatim ograničenjima ili kao konveksne figure koje minimizuju „dužinu granice“, što je relevantno u modeliranju oblika, pojednostavljivanju geometrijskih struktura i analizi poligonalnih reprezentacija.\\
+Rad pokazuje i kako se geometrijski ekstremalni problemi mogu efikasno
+redukovati na kombinatorne i algoritamske zadatke. Takođe, ovakvi ekstremalni problemi javljaju se kao pomoćni koraci u širim optimizacionim zadacima u računarskoj geometriji.
+
+\paragraph{Odnos prema drugim rezultatima.}
+Rezultati ovog rada predstavljaju unutrašnju varijantu ekstremalnih problema za konveksne poligone, za razliku od češće razmatranih problema opisivanja. Time se postojeći rezultati o ekstremalnim konveksnim poligonima proširuju na novu klasu problema, pri čemu se postiže i teorijsko razumevanje optimalnih konfiguracija i algoritamska efikasnost.
+
+\addcontentsline{toc}{section}{Literatura}
+\appendix
+\bibliography{literatura} 
+\bibliographystyle{plain}
+
+\appendix
+
+
+\end{document}
